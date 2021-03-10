@@ -1,4 +1,4 @@
-# Google Photos File Organizer
+# Google Photos Takeout Organizer
 
 This tools helps you organize and clean up your Google Photos Takeout directory.
 
@@ -7,8 +7,8 @@ libraries such as Apple Photos or Adobe Lightroom.
 
 ## Features:
 
-- Set missing date and GPS position from metadata files
-- Add people as keywords
+- Add missing date and GPS position to images and videos
+- Add people as keywords to images and videos
 - Remove video files that belong to live photos
 
 ## How to Run:
