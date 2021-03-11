@@ -37,7 +37,7 @@ export const getExifData = async (path: string) => {
     gpsLatutide,
     gpsLongitude,
     gpsAltitude,
-  ] = exifData.split("\t");
+  ] = exifData.split("\t").map((d) => (d === "-" ? undefined : d));
 
   return {
     dateTimeOriginal,

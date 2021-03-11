@@ -154,7 +154,7 @@ const processFile = async (file: fs.WalkEntry) => {
   const newExifValues: string[] = [];
 
   // Fix missing timestamps with information from Google Photos
-  if (exifData.dateTimeOriginal === "-" && exifData.createDate === "-") {
+  if (!exifData.dateTimeOriginal && !exifData.createDate) {
     const newDate = formatDate(
       Date.parse(metadata.photoTakenTime.formatted),
       "yyyy-MM-dd HH:mm:ss",
@@ -166,8 +166,8 @@ const processFile = async (file: fs.WalkEntry) => {
 
   // Add missing GPS information
   if (
-    exifData.gpsLatutide === "-" &&
-    exifData.gpsLongitude === "-" &&
+    !exifData.gpsLatutide &&
+    !exifData.gpsLongitude &&
     metadata.geoData.latitude
   ) {
     args.verbose && log("Adding GPS data");
