@@ -22,14 +22,19 @@ deno run https://deno.land/x/gpto/mod.ts
 ## Available Options:
 
 ```
-Usage: deno run [options] [directory]
+Usage: deno run [options] <directory>
+
+Features:
+  -p, --people             Adds tagged people from GPhotos as keywords [boolean]
+  -l, --remove-live-video  Trashes files that belong to live photos    [boolean]
 
 Options:
-      --version            Show version number                         [boolean]
-  -v, --verbose            activates verbose logging                   [boolean]
-  -d, --dry-run            don't write any changes                     [boolean]
-  -p, --people             adds tagged people from GPhotos as keywords [boolean]
-  -l, --remove-live-video  trashes files that belong to live photos    [boolean]
-      --threads            concurrency                    [number] [default: 15]
-  -h, --help               Show help                                   [boolean]
+  -v, --verbose  Activates verbose logging                             [boolean]
+  -d, --dry-run  Disables writing any changes to disk                  [boolean]
+  -t, --threads  Concurrent processed files               [number] [default: 15]
+  -h, --help     Show help                                             [boolean]
+
+Examples:
+  deno run .                   Run the script in the current folder
+  deno run --dry-run <folder>  Run the script without modifying any files
 ```

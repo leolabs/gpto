@@ -14,33 +14,41 @@ import { ensurePermissions } from "./util/permissions.ts";
 import { getRelatedFilePath } from "./util/paths.ts";
 
 const args = yargs(Deno.args)
-  .usage("Usage: $0 [options] [directory]")
+  .usage("Usage: $0 [options] <directory>")
+  .strict()
   .alias("h", "help")
-  .option("verbose", {
-    alias: "v",
-    describe: "activates verbose logging",
-    type: "boolean",
-  })
-  .option("dry-run", {
-    alias: "d",
-    describe: "don't write any changes",
-    type: "boolean",
-  })
+  .version(false)
+  .group(["people", "remove-live-video"], "Features:")
   .option("people", {
     alias: "p",
-    describe: "adds tagged people from GPhotos as keywords",
+    describe: "Adds tagged people from GPhotos as keywords",
     type: "boolean",
   })
   .option("remove-live-video", {
     alias: "l",
-    describe: "trashes files that belong to live photos",
+    describe: "Trashes files that belong to live photos",
+    type: "boolean",
+  })
+  .option("verbose", {
+    alias: "v",
+    describe: "Activates verbose logging",
+    type: "boolean",
+  })
+  .option("dry-run", {
+    alias: "d",
+    describe: "Disables writing any changes to disk",
     type: "boolean",
   })
   .option("threads", {
-    describe: "concurrency",
+    alias: "t",
+    describe: "Concurrent processed files",
     type: "number",
     default: 15,
-  }).argv;
+  })
+  .example([
+    ["$0 .", "Run the script in the current folder"],
+    ["$0 --dry-run <folder>", "Run the script without modifying any files"],
+  ]).argv;
 
 const rootDir: string | undefined = args._[0];
 
