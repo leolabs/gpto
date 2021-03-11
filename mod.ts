@@ -14,7 +14,7 @@ import { ensurePermissions } from "./util/permissions.ts";
 import { getRelatedFilePath } from "./util/paths.ts";
 
 const args = yargs(Deno.args)
-  .usage("Usage: $0 [options] <directory>")
+  .usage("Usage: [options] <directory>")
   .strict()
   .alias("h", "help")
   .version(false)
@@ -46,8 +46,8 @@ const args = yargs(Deno.args)
     default: 15,
   })
   .example([
-    ["$0 .", "Run the script in the current folder"],
-    ["$0 --dry-run <folder>", "Run the script without modifying any files"],
+    [".", "Run the script in the current folder"],
+    ["--dry-run <folder>", "Run the script without modifying any files"],
   ]).argv;
 
 const rootDir: string | undefined = args._[0];

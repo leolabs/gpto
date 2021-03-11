@@ -22,7 +22,7 @@ deno run https://deno.land/x/gpto/mod.ts
 ## Available Options:
 
 ```
-Usage: deno run [options] <directory>
+Usage: [options] <directory>
 
 Features:
   -p, --people             Adds tagged people from GPhotos as keywords [boolean]
@@ -35,6 +35,6 @@ Options:
   -h, --help     Show help                                             [boolean]
 
 Examples:
-  deno run .                   Run the script in the current folder
-  deno run --dry-run <folder>  Run the script without modifying any files
+  .                   Run the script in the current folder
+  --dry-run <folder>  Run the script without modifying any files
 ```
