@@ -20,7 +20,7 @@ export const getExifData = async (path: string) => {
   const exifData = await exec([
     "exiftool",
     "-n",
-    "-t",
+    "-T",
     "-d",
     "%Y-%m-%d %H:%M:%S%z",
     "-DateTimeOriginal",

@@ -149,7 +149,7 @@ const processFile = async (file: fs.WalkEntry) => {
   }
 
   const metadata: MetadataFile = JSON.parse(await Deno.readTextFile(file.path));
-  const exifData = await getExifData(file.path);
+  const exifData = await getExifData(relatedFilePath);
   const newExifValues: string[] = [];
 
   // Fix missing timestamps with information from Google Photos
