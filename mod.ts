@@ -140,11 +140,7 @@ const processFile = async (file: fs.WalkEntry) => {
     mimeType === "image/jpeg" &&
     ![".jpg", ".jpeg"].includes(extension.toLowerCase())
   ) {
-    log(
-      "The file claims to be a",
-      extension,
-      "but it's actually a JPG. Renaming..."
-    );
+    log("claims to be a", extension, "but it's actually a JPG. Renaming...");
 
     if (!dryRun) {
       const newPath = path.join(dirName, `${fileName}.jpg`);
