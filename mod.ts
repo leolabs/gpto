@@ -1,5 +1,4 @@
 import * as path from "https://deno.land/std@0.90.0/path/mod.ts";
-import * as fs from "https://deno.land/std@0.90.0/fs/mod.ts";
 import * as colors from "https://deno.land/std@0.90.0/fmt/colors.ts";
 
 import yargs from "https://deno.land/x/yargs/deno.ts";
@@ -9,6 +8,7 @@ import pMap from "https://cdn.skypack.dev/p-map";
 
 import { MetadataFile } from "./types/metadata.ts";
 import { exifToolInstalled, getExifData, getMimeType } from "./util/exif.ts";
+import * as fs from "./util/fs.ts";
 import { exec } from "./util/cli.ts";
 import { ensurePermissions } from "./util/permissions.ts";
 import { getRelatedFilePath } from "./util/paths.ts";
@@ -112,7 +112,7 @@ const processFile = async (file: fs.WalkEntry) => {
     progress.console(colors.red(`[${niceFileName}] ${args.join(" ")}`));
   };
 
-  if (!fs.existsSync(relatedFilePath)) {
+  if (!(await fs.exists(relatedFilePath))) {
     complete();
     args.verbose && error("File", relatedFilePath, "doesn't exist.");
     return;

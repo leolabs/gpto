@@ -16,7 +16,7 @@ libraries such as Apple Photos or Adobe Lightroom.
 Make sure you have [Deno](https://deno.land) installed, then run:
 
 ```shell
-deno run --unstable https://deno.land/x/gpto/mod.ts
+deno run https://deno.land/x/gpto/mod.ts
 ```
 
 ## Available Options:
