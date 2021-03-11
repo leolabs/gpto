@@ -51,13 +51,18 @@ const args = yargs(Deno.args)
   ]).argv;
 
 const rootDir: string | undefined = args._[0];
+const dryRun = args.dryRun;
 
 if (!rootDir) {
   console.error("No directory set. Please pass one to the script.");
   Deno.exit(1);
 }
 
-if (!(await ensurePermissions(rootDir, !args.dryRun))) {
+if (dryRun) {
+  console.log("Processing in dry run mode. No changes will be made.");
+}
+
+if (!(await ensurePermissions(rootDir, !dryRun))) {
   console.error("The script doesn't have enough permissions to run.");
   Deno.exit(1);
 }
@@ -141,7 +146,7 @@ const processFile = async (file: fs.WalkEntry) => {
       "but it's actually a JPG. Renaming..."
     );
 
-    if (!args.dryRun) {
+    if (!dryRun) {
       const newPath = path.join(dirName, `${fileName}.jpg`);
       await fs.move(relatedFilePath, newPath);
       relatedFilePath = newPath;
@@ -189,7 +194,7 @@ const processFile = async (file: fs.WalkEntry) => {
 
   // If there are any changes, write them to the file
   if (newExifValues.length) {
-    if (args.dryRun) {
+    if (dryRun) {
       log("Changes:", newExifValues.join(" "));
     } else {
       try {
@@ -235,7 +240,7 @@ if (args.removeLiveVideo) {
       colors.blue(file.name),
       "because it is a live video."
     );
-    if (!args.dryRun && trashPath) {
+    if (!dryRun && trashPath) {
       await fs.move(file.path, path.join(trashPath, file.name));
     }
   }
