@@ -92,6 +92,8 @@ for await (const file of tmpFiles) {
   await Deno.remove(file.path);
 }
 
+console.log("Getting all files...");
+
 // Check for metadata files
 const jsonFiles = Array.from(
   fs.expandGlobSync("**/*.json", {
@@ -101,6 +103,7 @@ const jsonFiles = Array.from(
 );
 
 const filesWithMetadata = new Set();
+const filesWithErrors = new Map<string, string>();
 
 console.log("Found", jsonFiles.length, "metadata files.");
 
@@ -125,96 +128,111 @@ const processFile = async (file: fs.WalkEntry) => {
     progress.console(colors.red(`[${niceFileName}] ${args.join(" ")}`));
   };
 
-  if (!(await fs.exists(relatedFilePath))) {
-    complete();
-    args.verbose && error("File", relatedFilePath, "doesn't exist.");
-    return;
-  }
-
-  const dirName = path.dirname(relatedFilePath);
-  const fileName = path.basename(relatedFilePath);
-  const extension = path.extname(relatedFilePath);
-
-  const mimeType = await getMimeType(relatedFilePath);
-  if (
-    mimeType === "image/jpeg" &&
-    ![".jpg", ".jpeg"].includes(extension.toLowerCase())
-  ) {
-    log("claims to be a", extension, "but it's actually a JPG. Renaming...");
-
-    if (!dryRun) {
-      const newPath = path.join(dirName, `${fileName}.jpg`);
-      await fs.move(relatedFilePath, newPath);
-      relatedFilePath = newPath;
+  try {
+    if (!(await fs.exists(relatedFilePath))) {
+      complete();
+      args.verbose && error("File", relatedFilePath, "doesn't exist.");
+      return;
     }
-  }
 
-  const metadata: MetadataFile = JSON.parse(await Deno.readTextFile(file.path));
-  const exifData = await getExifData(relatedFilePath);
-  const newExifValues: string[] = [];
+    const dirName = path.dirname(relatedFilePath);
+    const fileName = path.basename(relatedFilePath);
+    const extension = path.extname(relatedFilePath);
 
-  // Fix missing timestamps with information from Google Photos
-  if (!exifData.dateTimeOriginal && !exifData.createDate) {
-    const newDate = formatDate(
-      Date.parse(metadata.photoTakenTime.formatted),
-      "yyyy-MM-dd HH:mm:ss",
-      {}
-    );
-    args.verbose && log(`Setting date to ${newDate}...`);
-    newExifValues.push(`-DateTimeOriginal=${newDate}`);
-  }
+    const mimeType = await getMimeType(relatedFilePath);
+    if (
+      mimeType === "image/jpeg" &&
+      ![".jpg", ".jpeg"].includes(extension.toLowerCase())
+    ) {
+      log("claims to be a", extension, "but it's actually a JPG. Renaming...");
 
-  // Add missing GPS information
-  if (
-    !exifData.gpsLatutide &&
-    !exifData.gpsLongitude &&
-    metadata.geoData.latitude
-  ) {
-    args.verbose && log("Adding GPS data");
-    newExifValues.push(`-GPSLatitude=${metadata.geoData.latitude}`);
-    newExifValues.push(`-GPSLongitude=${metadata.geoData.longitude}`);
-    newExifValues.push(`-GPSAltitude=${metadata.geoData.altitude}`);
-  }
-
-  // Add people tagged in Google Photos
-  if (metadata.people && args.people) {
-    const names = metadata.people.map((p) => p.name);
-    args.verbose && log("Adding people keywords:", names.join(", "));
-
-    for (const person of names) {
-      // Remove and re-add to avoid duplicates
-      newExifValues.push(`-Keywords-=${person}`);
-      newExifValues.push(`-Keywords+=${person}`);
-    }
-  }
-
-  // If there are any changes, write them to the file
-  if (newExifValues.length) {
-    if (dryRun) {
-      log("Changes:", newExifValues.join(" "));
-    } else {
-      try {
-        const result = await exec([
-          "exiftool",
-          "-overwrite_original",
-          ...newExifValues,
-          relatedFilePath,
-        ]);
-        args.verbose && result.split("\n").forEach((l) => log(l));
-      } catch (e) {
-        error("Exiftool:", e.message);
+      if (!dryRun) {
+        const newPath = path.join(dirName, `${fileName}.jpg`);
+        await fs.move(relatedFilePath, newPath);
+        relatedFilePath = newPath;
       }
     }
-  }
 
+    const metadata: MetadataFile = JSON.parse(
+      await Deno.readTextFile(file.path)
+    );
+    const exifData = await getExifData(relatedFilePath);
+    const newExifValues: string[] = [];
+
+    // Fix missing timestamps with information from Google Photos
+    if (!exifData.dateTimeOriginal && !exifData.createDate) {
+      const newDate = formatDate(
+        Date.parse(metadata.photoTakenTime.formatted),
+        "yyyy-MM-dd HH:mm:ss",
+        {}
+      );
+      args.verbose && log(`Setting date to ${newDate}...`);
+      newExifValues.push(`-DateTimeOriginal=${newDate}`);
+      newExifValues.push(`-CreateDate=${newDate}`);
+    }
+
+    // Add missing GPS information
+    if (
+      !exifData.gpsLatutide &&
+      !exifData.gpsLongitude &&
+      metadata.geoData.latitude
+    ) {
+      args.verbose && log("Adding GPS data");
+      newExifValues.push(`-GPSLatitude=${metadata.geoData.latitude}`);
+      newExifValues.push(`-GPSLongitude=${metadata.geoData.longitude}`);
+      newExifValues.push(`-GPSAltitude=${metadata.geoData.altitude}`);
+    }
+
+    // Add people tagged in Google Photos
+    if (metadata.people && args.people) {
+      const names = metadata.people.map((p) => p.name);
+      args.verbose && log("Adding people keywords:", names.join(", "));
+
+      for (const person of names) {
+        // Remove and re-add to avoid duplicates
+        newExifValues.push(`-Keywords-=${person}`);
+        newExifValues.push(`-Keywords+=${person}`);
+      }
+    }
+
+    // If there are any changes, write them to the file
+    if (newExifValues.length) {
+      if (dryRun) {
+        log("Changes:", newExifValues.join(" "));
+      } else {
+        try {
+          const result = await exec([
+            "exiftool",
+            "-overwrite_original",
+            ...newExifValues,
+            relatedFilePath,
+          ]);
+          args.verbose && result.split("\n").forEach((l) => log(l));
+        } catch (e) {
+          error("Exiftool:", e.message);
+        }
+      }
+    }
+  } catch (e) {
+    error(colors.red(e.message));
+    filesWithErrors.set(relatedFilePath, e.message);
+  }
   filesWithMetadata.add(relatedFilePath);
+  progress.title = path.basename(path.dirname(file.path));
   complete();
 };
 
 await pMap(jsonFiles, processFile, { concurrency: args.threads });
 
+if (filesWithErrors.size) {
+  console.log("Errors:");
+  for (const [path, message] of filesWithErrors.entries()) {
+    console.log(path, "->", message);
+  }
+}
+
 if (args.removeLiveVideo) {
-  console.log("Removing separated live videos...");
+  console.log("Removing separate live videos...");
 
   const allFiles = fs.expandGlobSync("**/*", {
     root: rootDir,
