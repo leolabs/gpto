@@ -13,6 +13,9 @@ export const exifToolInstalled = async () => {
   }
 };
 
+/** These values mean there is no data available for the given field */
+const UNDEFINED_DATA = ["-", "0000:00:00 00:00:00"];
+
 /**
  * Extracts the most important EXIF data from a given file.
  */
@@ -37,7 +40,9 @@ export const getExifData = async (path: string) => {
     gpsLatutide,
     gpsLongitude,
     gpsAltitude,
-  ] = exifData.split("\t").map((d) => (d === "-" ? undefined : d));
+  ] = exifData
+    .split("\t")
+    .map((d) => (UNDEFINED_DATA.includes(d) ? undefined : d));
 
   return {
     dateTimeOriginal,
