@@ -10,4 +10,4 @@ ADD util util
 ADD types types
 RUN deno cache mod.ts
 
-ENTRYPOINT ["deno", "run", "--allow-read", "--allow-write", "--allow-run", "mod.ts"]
+ENTRYPOINT ["deno", "run", "--unstable", "--allow-read", "--allow-write", "--allow-run", "mod.ts"]
