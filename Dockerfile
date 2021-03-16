@@ -1,9 +1,9 @@
 FROM hayd/alpine-deno:1.8.1
 
+RUN apk add exiftool
+
 WORKDIR /app
 USER deno
-
-RUN apk add exiftool
 
 ADD . .
 RUN deno cache mod.ts
