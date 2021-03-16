@@ -130,9 +130,15 @@ const processFile = async (file: fs.WalkEntry) => {
 
   try {
     if (!(await fs.exists(relatedFilePath))) {
-      complete();
-      args.verbose && error("File", relatedFilePath, "doesn't exist.");
-      return;
+      const originalPath = relatedFilePath;
+      // Maybe we have already renamed the file in a process before
+      relatedFilePath += ".jpg";
+      if (!(await fs.exists(relatedFilePath))) {
+        relatedFilePath = originalPath;
+        complete();
+        args.verbose && error("File", relatedFilePath, "doesn't exist.");
+        return;
+      }
     }
 
     const dirName = path.dirname(relatedFilePath);
