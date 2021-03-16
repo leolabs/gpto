@@ -236,6 +236,9 @@ const processFile = async (file: fs.WalkEntry) => {
 
 await pMap(jsonFiles, processFile, { concurrency: args.threads });
 
+console.log();
+console.log();
+
 if (filesWithErrors.size) {
   console.log("Errors:");
   for (const [path, message] of filesWithErrors.entries()) {
@@ -243,13 +246,23 @@ if (filesWithErrors.size) {
   }
 }
 
+const allFiles = fs.expandGlobSync("**/*", {
+  root: rootDir,
+  includeDirs: false,
+});
+
+const filesWithoutMetadata = Array.from(allFiles).filter(
+  (f) => !f.name.endsWith(".json") && !filesWithMetadata.has(f.path)
+);
+
+if (filesWithoutMetadata.length) {
+  const title = `${filesWithoutMetadata.length} files have no associated meta file:`;
+  console.log(colors.red(colors.bold(title)));
+  filesWithoutMetadata.forEach((f) => console.log(f.path));
+}
+
 if (args.removeLiveVideo) {
   console.log("Removing separate live videos...");
-
-  const allFiles = fs.expandGlobSync("**/*", {
-    root: rootDir,
-    includeDirs: false,
-  });
 
   const validExtensions = [".mov", ".mp4"];
 
