@@ -160,14 +160,26 @@ const processFile = async (file: fs.WalkEntry) => {
     const newExifValues: string[] = [];
 
     // Fix missing timestamps with information from Google Photos
-    if (!exifData.dateTimeOriginal && !exifData.createDate) {
+    if (!exifData.dateTimeOriginal) {
       const newDate = formatDate(
         Date.parse(metadata.photoTakenTime.formatted),
         "yyyy-MM-dd HH:mm:ss",
         {}
       );
-      args.verbose && log(`Setting date to ${newDate}...`);
+      args.verbose && log(`Setting original date to ${newDate}...`);
       newExifValues.push(`-DateTimeOriginal=${newDate}`);
+      newExifValues.push(`-FileCreateDate=${newDate}`);
+    }
+
+    // Set createDate only if we modify the file anyway,
+    // because it's not super important
+    if (!exifData.dateTimeOriginal && !exifData.createDate) {
+      const newDate = formatDate(
+        Date.parse(metadata.creationTime.formatted),
+        "yyyy-MM-dd HH:mm:ss",
+        {}
+      );
+      args.verbose && log(`Setting create date to ${newDate}...`);
       newExifValues.push(`-CreateDate=${newDate}`);
     }
 
