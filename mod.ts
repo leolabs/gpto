@@ -168,7 +168,10 @@ const processFile = async (file: fs.WalkEntry) => {
       );
       args.verbose && log(`Setting original date to ${newDate}...`);
       newExifValues.push(`-DateTimeOriginal=${newDate}`);
-      newExifValues.push(`-FileCreateDate=${newDate}`);
+      newExifValues.push(`-FileModifyDate=${newDate}`);
+      if (Deno.build.os !== "linux") {
+        newExifValues.push(`-FileCreateDate=${newDate}`);
+      }
     }
 
     // Set createDate only if we modify the file anyway,
