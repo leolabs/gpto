@@ -12,11 +12,13 @@ export const exec = async (cmd: string[]) => {
   const decoder = new TextDecoder();
   const success = (await process.status()).success;
 
+  const stdout = await process.output();
+  const stderr = await process.stderrOutput();
+
   if (!success) {
-    const msg = decoder.decode(await process.stderrOutput()).trim();
-    process.close();
+    const msg = decoder.decode(stderr).trim();
     throw new Error(msg || "exec: failed to execute command");
   }
 
-  return decoder.decode(await process.output()).trim();
+  return decoder.decode(stdout).trim();
 };
