@@ -28,6 +28,8 @@ export const getExifData = async (path: string) => {
     "%Y-%m-%d %H:%M:%S%z",
     "-DateTimeOriginal",
     "-CreateDate",
+    "-QuickTime:CreateDate",
+    "-Keys:CreationDate",
     "-GPSLatitude",
     "-GPSLongitude",
     "-GPSAltitude",
@@ -37,6 +39,8 @@ export const getExifData = async (path: string) => {
   const [
     dateTimeOriginal,
     createDate,
+    quickTimeCreateDate,
+    keysCreationDate,
     gpsLatutide,
     gpsLongitude,
     gpsAltitude,
@@ -47,6 +51,8 @@ export const getExifData = async (path: string) => {
   return {
     dateTimeOriginal,
     createDate,
+    quickTimeCreateDate,
+    keysCreationDate,
     gpsLatutide,
     gpsLongitude,
     gpsAltitude,

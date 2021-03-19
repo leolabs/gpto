@@ -1,7 +1,6 @@
 import * as path from "https://deno.land/std@0.90.0/path/mod.ts";
 import * as colors from "https://deno.land/std@0.90.0/fmt/colors.ts";
 
-import yargs from "https://deno.land/x/yargs/deno.ts";
 import formatDate from "https://deno.land/x/date_fns@v2.15.0/format/index.js";
 import ProgressBar from "https://deno.land/x/progress@v1.2.3/mod.ts";
 import pMap from "https://cdn.skypack.dev/p-map";
@@ -12,43 +11,7 @@ import * as fs from "./util/fs.ts";
 import { exec } from "./util/cli.ts";
 import { ensurePermissions } from "./util/permissions.ts";
 import { getRelatedFilePath } from "./util/paths.ts";
-
-const args = yargs(Deno.args)
-  .usage("Usage: [options] <directory>")
-  .strict()
-  .alias("h", "help")
-  .version(false)
-  .group(["people", "remove-live-video"], "Features:")
-  .option("people", {
-    alias: "p",
-    describe: "Adds tagged people from GPhotos as keywords",
-    type: "boolean",
-  })
-  .option("remove-live-video", {
-    alias: "l",
-    describe: "Trashes files that belong to live photos",
-    type: "boolean",
-  })
-  .option("verbose", {
-    alias: "v",
-    describe: "Activates verbose logging",
-    type: "boolean",
-  })
-  .option("dry-run", {
-    alias: "d",
-    describe: "Disables writing any changes to disk",
-    type: "boolean",
-  })
-  .option("threads", {
-    alias: "t",
-    describe: "Concurrent processed files",
-    type: "number",
-    default: 15,
-  })
-  .example([
-    [".", "Run the script in the current folder"],
-    ["--dry-run <folder>", "Run the script without modifying any files"],
-  ]).argv;
+import { args } from "./util/args.ts";
 
 const rootDir: string | undefined = args._[0];
 const dryRun = args.dryRun;
@@ -77,7 +40,7 @@ if (!(await exifToolInstalled())) {
 
 // Make a trash folder
 let trashPath: string | null = null;
-if (!args.dryRun) {
+if (!args.dryRun && args.removeLiveVideo) {
   trashPath = path.join(rootDir, "_trash");
   await fs.ensureDir(trashPath);
 }
@@ -108,8 +71,8 @@ const filesWithErrors = new Map<string, string>();
 console.log("Found", jsonFiles.length, "metadata files.");
 
 const progress = new ProgressBar({
-  total: jsonFiles.length,
   width: 1000,
+  total: jsonFiles.length,
   title: "Processing files",
 });
 
@@ -165,16 +128,28 @@ const processFile = async (file: fs.WalkEntry) => {
     const exifData = await getExifData(relatedFilePath);
     const newExifValues: string[] = [];
 
+    const parsedDate = Date.parse(metadata.photoTakenTime.formatted);
+    const newDate = formatDate(parsedDate, "yyyy-MM-dd HH:mm:ssXXX", {});
+
+    const touchDate = formatDate(parsedDate, "yyyyMMddHHmm.ss", {});
+    await exec(["touch", "-c", "-t", touchDate, relatedFilePath]);
+
     // Fix missing timestamps with information from Google Photos
-    if (!exifData.dateTimeOriginal) {
-      const newDate = formatDate(
-        Date.parse(metadata.photoTakenTime.formatted),
-        "yyyy-MM-dd HH:mm:ss",
-        {}
-      );
+    if (
+      !exifData.dateTimeOriginal &&
+      !exifData.quickTimeCreateDate &&
+      !exifData.keysCreationDate
+    ) {
       args.verbose && log(`Setting original date to ${newDate}...`);
-      newExifValues.push(`-DateTimeOriginal=${newDate}`);
-      newExifValues.push(`-FileModifyDate=${newDate}`);
+
+      if ([".mp4", ".m4v", ".mov"].includes(extension.toLowerCase())) {
+        args.verbose && log("Setting movie date to", newDate);
+        newExifValues.push(`-Keys:CreationDate=${newDate}`);
+        newExifValues.push(`-QuickTime:CreateDate=${newDate}`);
+      } else {
+        newExifValues.push(`-DateTimeOriginal=${newDate}`);
+      }
+
       if (Deno.build.os !== "linux") {
         newExifValues.push(`-FileCreateDate=${newDate}`);
       }
@@ -185,7 +160,7 @@ const processFile = async (file: fs.WalkEntry) => {
     if (!exifData.dateTimeOriginal && !exifData.createDate) {
       const newDate = formatDate(
         Date.parse(metadata.creationTime.formatted),
-        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd HH:mm:ssXXX",
         {}
       );
       args.verbose && log(`Setting create date to ${newDate}...`);
@@ -218,9 +193,9 @@ const processFile = async (file: fs.WalkEntry) => {
 
     // If there are any changes, write them to the file
     if (newExifValues.length) {
-      if (dryRun) {
-        log("Changes:", newExifValues.join(" "));
-      } else {
+      args.verbose && log("Changes:", newExifValues.join(" "));
+
+      if (!dryRun) {
         try {
           const result = await exec([
             "exiftool",
