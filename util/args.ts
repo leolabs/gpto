@@ -1,4 +1,4 @@
-import yargs from "https://deno.land/x/yargs/deno.ts";
+import yargs from "https://deno.land/x/yargs@v16.2.0-deno/deno.ts";
 
 export const args = yargs(Deno.args)
   .usage("Usage: [options] <directory>")

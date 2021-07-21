@@ -3,7 +3,7 @@ import * as colors from "https://deno.land/std@0.90.0/fmt/colors.ts";
 
 import formatDate from "https://deno.land/x/date_fns@v2.15.0/format/index.js";
 import ProgressBar from "https://deno.land/x/progress@v1.2.3/mod.ts";
-import pMap from "https://cdn.skypack.dev/p-map";
+import pMap from "https://cdn.skypack.dev/p-map@5.0.0";
 
 import { MetadataFile } from "./types/metadata.ts";
 import { exifToolInstalled, getExifData, getMimeType } from "./util/exif.ts";
@@ -250,11 +250,13 @@ if (args.removeLiveVideo) {
 
   const validExtensions = [".mov", ".mp4"];
 
-  for await (const file of allFiles) {
-    if (
-      !validExtensions.includes(path.extname(file.name).toLowerCase()) ||
-      filesWithMetadata.has(file.path)
-    ) {
+  for (const file of filesWithoutMetadata) {
+    console.log(
+      `Checking ${file.name} with extension`,
+      path.extname(file.name).toLowerCase()
+    );
+
+    if (!validExtensions.includes(path.extname(file.name).toLowerCase())) {
       continue;
     }
 
