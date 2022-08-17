@@ -13,7 +13,7 @@ libraries such as Apple Photos or Adobe Lightroom.
 
 ## How to Run:
 
-Make sure you have [Deno](https://deno.land) installed, then run:
+Make sure you have [Deno](https://deno.land) and [exiftool](https://exiftool.org/index.html) installed, then run:
 
 ```shell
 deno run https://deno.land/x/gpto/mod.ts
